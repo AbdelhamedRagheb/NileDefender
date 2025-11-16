@@ -1,8 +1,8 @@
 # Web_Scanner_E4
 
 ## Descripton 
-    Web Scanner E4 is a web application with three pages (Home, Results, and About) that allows users to search for vulnerabilities or CVEs by:
 
+Web Scanner E4 is a web application with three pages (Home, Results, and About) that allows users to search for vulnerabilities or CVEs by:
 -	Entering a URL
 -	Entering an IP address
 -	Uploading a file (source code)
