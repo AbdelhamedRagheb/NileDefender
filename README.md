@@ -12,3 +12,8 @@ On the server side:
 -	For uploaded file: scans code for weaknesses 
 
 The Results page displays all findings, and users can export results in various formats. 
+
+
+# Pages Design 
+https://excalidraw.com/#json=oSrZnZ1vgoIohU6cgz77o,zaioTUhpKSf5YYQ9UVrsIA
+
