@@ -1,17 +1,8 @@
 # NileDefender
 
 ## Descripton 
+NileDefender is a self-hosted security tool engineered for penetration testers and development teams. It provides a flexible framework for conducting comprehensive web application security tests through a unified web interface.
 
-NileDefender is a web application with three pages (Home, Results, and About) that allows users to search for vulnerabilities or CVEs by:
--	Entering a URL
--	Entering an IP address
--	Uploading a file (source code)
-
-On the server side:
--	For URL/IP: detects running services and searches for related CVEs
--	For uploaded file: scans code for weaknesses 
-
-The Results page displays all findings, and users can export results in various formats. 
 
 
 # Pages Design 
