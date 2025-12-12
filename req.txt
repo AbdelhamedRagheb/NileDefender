@@ -1,0 +1,5 @@
+# req_minimal.txt - Absolute essentials
+requests==2.31.0
+dnspython==2.4.2
+beautifulsoup4==4.12.2
+colorama==0.4.6
