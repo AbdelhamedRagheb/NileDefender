@@ -1,0 +1,17 @@
+use python 3.13 
+
+create a folder and call it NileDefender
+
+clone the code from github in this folder
+
+create a virtual env => python -m venv my-venv
+
+activate it => source my-venv/bin/activate
+
+then install all requirements => pip install -r requirements.txt
+
+run the server => python server.py
+
+Open your browser and navigate to: http://localhost:5000
+
+Enjoy! ❤️
