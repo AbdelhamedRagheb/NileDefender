@@ -14,4 +14,8 @@ run the server => python server.py
 
 Open your browser and navigate to: http://localhost:5000
 
+
+If you want to avoid the headache, use Docker 🐋
+
+
 Enjoy! ❤️
