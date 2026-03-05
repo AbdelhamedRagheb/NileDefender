@@ -1,50 +1,25 @@
-# NileDefender
+<p align="center">
+  <img src="documentation/banner.png" alt="NileDefender" width="600"/>
+</p>
 
-## Descripton 
-NileDefender is a self-hosted security tool engineered for penetration testers and development teams. It provides a flexible framework for conducting comprehensive web application security tests through a unified web interface.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.13-blue?logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/flask-3.0-green?logo=flask&logoColor=white"/>
+  <img src="https://img.shields.io/badge/docker-ready-blue?logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/selenium-4.x-orange?logo=selenium&logoColor=white"/>
+  <img src="https://img.shields.io/badge/license-MIT-purple"/>
+</p>
 
+<p align="center"><b>Automated recon & vulnerability scanning from a real-time web dashboard.</b></p>
 
+---
 
-# Pages Design 
-https://excalidraw.com/#json=oSrZnZ1vgoIohU6cgz77o,zaioTUhpKSf5YYQ9UVrsIA
+## What is NileDefender?
 
-# System Arch
-https://excalidraw.com/#json=opjfKkRATAPZveyIDOy9I,2x7sTI-w_oYqYZ4ZfMcQCg
+NileDefender is a web-based security tool that automates the full penetration testing pipeline:
 
-# UI/UX 
-https://www.figma.com/proto/21LhpLXwu5zOjNxVuqNzdk/NileDefender?node-id=5-17&p=f&t=vNMH06Q9MfXQpfEZ-1&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=5%3A17
+**Subdomain discovery → Endpoint crawling → Vulnerability scanning**
 
-## Quick Start with Docker (Recommended)
+It works on both **remote domains** (`example.com`) and **local targets** (`http://localhost/bWAPP/`), with a modern dark-themed dashboard that shows results in real-time via WebSocket.
 
-To run NileDefender easily using Docker, follow these steps:
-
-1.  **Prerequisites:** Ensure you have Docker and Docker Compose installed on your machine.
-2.  **Run the application:**
-    ```bash
-    docker-compose up -d
-    ```
-3.  **Access the interface:** Open your browser and navigate to [http://localhost:5000](http://localhost:5000).
-
-To stop the application, run:
-```bash
-docker-compose down
-```
-
-## Manual Installation
-
-If you prefer to run it manually without Docker:
-
-1.  **Create a virtual environment:**
-    ```bash
-    python3 -m venv my-venv
-    source my-venv/bin/activate
-    ```
-2.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  **Run the server:**
-    ```bash
-    python server.py
-    ```
-4.  **Access the interface:** Open your browser and navigate to [http://localhost:5000](http://localhost:5000).
+---
