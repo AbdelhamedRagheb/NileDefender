@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="documentation/banner.png" alt="NileDefender" width="600"/>
+  <img src="Documents/banner.png" alt="NileDefender" width="600"/>
 </p>
 
 <p align="center">
