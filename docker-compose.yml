@@ -1,0 +1,7 @@
+services:
+  niledefender:
+    build: .
+    network_mode: host
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped

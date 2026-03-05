@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NileDefender - Web Vulnerability Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">
+                    <h1>NileDefender</h1>
+                    <span>Vulnerability Scanner</span>
+                </div>
+            </div>
+
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a class="nav-link active" onclick="showPage('dashboard')" id="nav-dashboard">
+                        <span class="icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a class="nav-link" onclick="showPage('scans')" id="nav-scans">
+                        <span class="icon">🔍</span>
+                        <span>Scans</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Recon</div>
+                    <a class="nav-link" onclick="showPage('subdomains')" id="nav-subdomains">
+                        <span class="icon">🌐</span>
+                        <span>Subdomains</span>
+                    </a>
+                    <a class="nav-link" onclick="showPage('endpoints')" id="nav-endpoints">
+                        <span class="icon">🔗</span>
+                        <span>Endpoints</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Security</div>
+                    <a class="nav-link" onclick="showPage('vulnerabilities')" id="nav-vulnerabilities">
+                        <span class="icon">⚠️</span>
+                        <span>Vulnerabilities</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="connection-status">
+                <span class="dot connected" id="connection-dot"></span>
+                <span id="connection-text">Connected</span>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="page-dashboard" class="page active">
+                <div class="page-header">
+                    <div>
+                        <h2>Dashboard</h2>
+                        <p>Overview of your reconnaissance and scanning activity</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-danger-outline" onclick="deleteAllScans()" id="delete-all-btn-dashboard">
+                            <span>🗑️</span> Delete All
+                        </button>
+                        <button class="btn btn-primary" onclick="showModal()">
+                            <span>+</span> New Scan
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="card stat-card purple">
+                        <div class="icon">🎯</div>
+                        <div class="value" id="stat-total-scans">0</div>
+                        <div class="label">Total Scans</div>
+                    </div>
+                    <div class="card stat-card blue">
+                        <div class="icon">⚡</div>
+                        <div class="value" id="stat-running-scans">0</div>
+                        <div class="label">Running</div>
+                    </div>
+                    <div class="card stat-card green">
+                        <div class="icon">🌐</div>
+                        <div class="value" id="stat-subdomains">0</div>
+                        <div class="label">Subdomains</div>
+                    </div>
+                    <div class="card stat-card orange">
+                        <div class="icon">🔗</div>
+                        <div class="value" id="stat-endpoints">0</div>
+                        <div class="label">Endpoints</div>
+                    </div>
+                    <div class="card stat-card red">
+                        <div class="icon">⚠️</div>
+                        <div class="value" id="stat-vulnerabilities">0</div>
+                        <div class="label">Vulnerabilities</div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 24px;">
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 20px;">Recent Scans</h3>
+                    <div id="recent-scans-list">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span>Loading scans...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scans Page -->
+            <div id="page-scans" class="page">
+                <div class="page-header">
+                    <div>
+                        <h2>Scans</h2>
+                        <p>Manage your security reconnaissance scans</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-danger-outline" onclick="deleteAllScans()" id="delete-all-btn-scans">
+                            <span>🗑️</span> Delete All
+                        </button>
+                        <button class="btn btn-primary" onclick="showModal()">
+                            <span>+</span> New Scan
+                        </button>
+                    </div>
+                </div>
+
+                <div class="scans-grid" id="scans-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Loading scans...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Subdomains Page -->
+            <div id="page-subdomains" class="page">
+                <div class="page-header">
+                    <div>
+                        <h2>All Subdomains</h2>
+                        <p>Subdomains discovered across all scans</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="badge badge-completed" id="subdomains-total-badge">0 total</span>
+                    </div>
+                </div>
+                <div class="card" style="padding: 24px;">
+                    <div style="margin-bottom: 16px;">
+                        <input type="text" id="subdomains-search" placeholder="🔍  Search subdomains..."
+                            oninput="filterAllSubdomains()"
+                            style="width: 100%; padding: 12px 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-primary); font-size: 14px; font-family: inherit;">
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Subdomain</th>
+                                    <th>Target</th>
+                                    <th>HTTP Code</th>
+                                    <th>Title</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-subdomains-table">
+                                <tr>
+                                    <td colspan="4" class="loading">
+                                        <div class="spinner"></div> Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Endpoints Page -->
+            <div id="page-endpoints" class="page">
+                <div class="page-header">
+                    <div>
+                        <h2>All Endpoints</h2>
+                        <p>Endpoints discovered across all scans</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="badge badge-get" id="endpoints-get-badge">0 GET</span>
+                        <span class="badge badge-post" id="endpoints-post-badge">0 POST</span>
+                        <span class="badge badge-completed" id="endpoints-total-badge">0 total</span>
+                    </div>
+                </div>
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                        <input type="text" id="endpoints-search" placeholder="🔍  Search endpoints..."
+                            oninput="filterAllEndpoints()"
+                            style="flex: 1; padding: 12px 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-primary); font-size: 14px; font-family: inherit;">
+                        <div class="filter-pills">
+                            <button class="filter-pill active"
+                                onclick="filterAllEndpointsByMethod('all', this)">All</button>
+                            <button class="filter-pill" onclick="filterAllEndpointsByMethod('GET', this)">GET</button>
+                            <button class="filter-pill" onclick="filterAllEndpointsByMethod('POST', this)">POST</button>
+                            <button class="filter-pill" onclick="filterAllEndpointsByMethod('params', this)">With
+                                Params</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>URL</th>
+                                    <th>Parameters</th>
+                                    <th>Target</th>
+                                    <th>Source</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-endpoints-table">
+                                <tr>
+                                    <td colspan="5" class="loading">
+                                        <div class="spinner"></div> Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Vulnerabilities Page -->
+            <div id="page-vulnerabilities" class="page">
+                <div class="page-header">
+                    <div>
+                        <h2>All Vulnerabilities</h2>
+                        <p>Security vulnerabilities found across all scans</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;" id="vuln-severity-badges">
+                    </div>
+                </div>
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                        <input type="text" id="vulns-search" placeholder="🔍  Search vulnerabilities..."
+                            oninput="filterAllVulns()"
+                            style="flex: 1; padding: 12px 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-primary); font-size: 14px; font-family: inherit;">
+                        <div class="filter-pills">
+                            <button class="filter-pill active"
+                                onclick="filterAllVulnsBySeverity('all', this)">All</button>
+                            <button class="filter-pill"
+                                onclick="filterAllVulnsBySeverity('Critical', this)">Critical</button>
+                            <button class="filter-pill" onclick="filterAllVulnsBySeverity('High', this)">High</button>
+                            <button class="filter-pill"
+                                onclick="filterAllVulnsBySeverity('Medium', this)">Medium</button>
+                            <button class="filter-pill" onclick="filterAllVulnsBySeverity('Low', this)">Low</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Severity</th>
+                                    <th>URL</th>
+                                    <th>Method</th>
+                                    <th>Parameter</th>
+                                    <th>Target</th>
+                                    <th>Payload</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-vulns-table">
+                                <tr>
+                                    <td colspan="7" class="loading">
+                                        <div class="spinner"></div> Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scan Details Page -->
+            <div id="page-scan-details" class="page">
+                <a class="back-link" onclick="showPage('scans')">
+                    ← Back to Scans
+                </a>
+
+                <div class="detail-header">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div class="domain" id="detail-domain">Loading...</div>
+                            <div class="meta">
+                                <span>Scan ID: <strong id="detail-scan-id">-</strong></span>
+                                <span>Date: <strong id="detail-date">-</strong></span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span class="badge" id="detail-status">-</span>
+                            <!-- Generate Report Button (AI) -->
+                            <button class="btn btn-generate-report" onclick="generateAIReport()" id="ai-report-btn"
+                                title="Generate AI-powered security report">
+                                <span class="btn-report-icon">📄</span>
+                                <span>Generate Report</span>
+                                <span class="ai-badge">🤖 AI</span>
+                            </button>
+                            <!-- Export Dropdown -->
+                            <div class="export-dropdown" id="export-dropdown">
+                                <button class="btn btn-export" onclick="toggleExportDropdown()"
+                                    title="Export scan data">
+                                    <span>📤</span> Export
+                                    <span class="export-arrow">▾</span>
+                                </button>
+                                <div class="export-menu" id="export-menu">
+                                    <div class="export-menu-section">All Data</div>
+                                    <button onclick="exportScanData('json', 'all')">📋 Export All (JSON)</button>
+                                    <button onclick="exportScanData('csv', 'all')">📊 Export All (CSV)</button>
+                                    <div class="export-menu-divider"></div>
+                                    <div class="export-menu-section">Subdomains</div>
+                                    <button onclick="exportScanData('json', 'subdomains')">📋 Subdomains (JSON)</button>
+                                    <button onclick="exportScanData('csv', 'subdomains')">📊 Subdomains (CSV)</button>
+                                    <div class="export-menu-divider"></div>
+                                    <div class="export-menu-section">Endpoints</div>
+                                    <button onclick="exportScanData('json', 'endpoints')">📋 Endpoints (JSON)</button>
+                                    <button onclick="exportScanData('csv', 'endpoints')">📊 Endpoints (CSV)</button>
+                                    <div class="export-menu-divider"></div>
+                                    <div class="export-menu-section">Vulnerabilities</div>
+                                    <button onclick="exportScanData('json', 'vulnerabilities')">📋 Vulnerabilities
+                                        (JSON)</button>
+                                    <button onclick="exportScanData('csv', 'vulnerabilities')">📊 Vulnerabilities
+                                        (CSV)</button>
+                                </div>
+                            </div>
+                            <button class="btn-delete" id="detail-delete-btn" onclick="deleteCurrentScan()"
+                                title="Delete scan">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="card stat-card green">
+                        <div class="value" id="detail-subdomains">0</div>
+                        <div class="label">Subdomains (Alive)</div>
+                    </div>
+                    <div class="card stat-card orange">
+                        <div class="value" id="detail-get">0</div>
+                        <div class="label">GET Endpoints</div>
+                    </div>
+                    <div class="card stat-card red">
+                        <div class="value" id="detail-post">0</div>
+                        <div class="label">POST Endpoints</div>
+                    </div>
+                    <div class="card stat-card purple">
+                        <div class="value" id="detail-vulns">0</div>
+                        <div class="label">Vulnerabilities</div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="showDetailTab('subdomains')"
+                        id="detail-tab-subdomains">Subdomains</button>
+                    <button class="tab" onclick="showDetailTab('get-endpoints')" id="detail-tab-get-endpoints">GET
+                        Endpoints</button>
+                    <button class="tab" onclick="showDetailTab('post-endpoints')" id="detail-tab-post-endpoints">POST
+                        Endpoints</button>
+                    <button class="tab" onclick="showDetailTab('vulnerabilities')"
+                        id="detail-tab-vulnerabilities">Vulnerabilities</button>
+                </div>
+
+                <div class="card" style="padding: 24px;">
+                    <!-- Subdomains Tab -->
+                    <div id="detail-content-subdomains" class="detail-tab-content">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Subdomain</th>
+                                        <th>HTTP Code</th>
+                                        <th>Title</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subdomains-table">
+                                    <tr>
+                                        <td colspan="5" class="loading">
+                                            <div class="spinner"></div> Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- GET Endpoints Tab -->
+                    <div id="detail-content-get-endpoints" class="detail-tab-content" style="display: none;">
+                        <div class="filter-pills">
+                            <button class="filter-pill active" onclick="filterEndpoints('get', 'all')">All GET</button>
+                            <button class="filter-pill" onclick="filterEndpoints('get', 'params')">With Params</button>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>URL</th>
+                                        <th>Parameters</th>
+                                        <th>Source</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="get-endpoints-table">
+                                    <tr>
+                                        <td colspan="4" class="loading">
+                                            <div class="spinner"></div> Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- POST Endpoints Tab -->
+                    <div id="detail-content-post-endpoints" class="detail-tab-content" style="display: none;">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>URL</th>
+                                        <th>Body Parameters</th>
+                                        <th>Form Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="post-endpoints-table">
+                                    <tr>
+                                        <td colspan="4" class="loading">
+                                            <div class="spinner"></div> Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Vulnerabilities Tab -->
+                    <div id="detail-content-vulnerabilities" class="detail-tab-content" style="display: none;">
+                        <div id="detail-vuln-content">
+                            <div class="empty-state">
+                                <div class="icon">🔒</div>
+                                <h4>No Vulnerability Data</h4>
+                                <p>Run a vulnerability scan from "New Scan" to discover security issues</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- New Scan Modal -->
+    <div class="modal-overlay" id="scan-modal">
+        <div class="modal" style="max-width: 520px;">
+            <h3>New Scan</h3>
+
+            <!-- Scan Type Toggle -->
+            <div class="form-group" style="margin-bottom: 16px;">
+                <div class="scan-mode-toggle" style="display: flex; gap: 8px;">
+                    <button type="button" class="mode-btn active" id="modal-type-recon"
+                        onclick="setModalScanType('recon')" style="flex:1;">
+                        <span class="mode-icon">🔍</span>
+                        <span class="mode-label">Recon Scan</span>
+                        <span class="mode-desc">Discover subdomains & endpoints</span>
+                    </button>
+                    <button type="button" class="mode-btn" id="modal-type-vulnscan"
+                        onclick="setModalScanType('vulnscan')" style="flex:1;">
+                        <span class="mode-icon">🛡️</span>
+                        <span class="mode-label">Vulnerability Scan</span>
+                        <span class="mode-desc">Find security vulnerabilities</span>
+                    </button>
+                </div>
+            </div>
+
+            <form onsubmit="createScan(event)">
+                <div class="form-group">
+                    <label>Target</label>
+                    <input type="text" id="scan-target" placeholder="example.com or http://localhost/bWAPP/"
+                        oninput="onModalTargetInput()">
+                </div>
+
+                <!-- ===== RECON OPTIONS PANEL ===== -->
+                <div id="modal-recon-panel">
+                    <div
+                        style="margin-bottom: 12px; padding: 10px 14px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; font-size: 12px; color: var(--text-muted); border-left: 3px solid var(--accent-primary);">
+                        Enter a <strong>domain</strong> (e.g. example.com) or <strong>local URL</strong> to start
+                        reconnaissance.
+                    </div>
+                    <div class="form-group">
+                        <label>Options</label>
+                        <div
+                            style="display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--bg-primary); border-radius: 10px;">
+                            <label
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary);">
+                                <input type="checkbox" id="scan-passive" checked
+                                    style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
+                                <span>🔍 Passive Recon</span>
+                                <span style="font-size: 11px; color: var(--text-muted);">(CT logs, APIs — safe, remote
+                                    only)</span>
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary);">
+                                <input type="checkbox" id="scan-active"
+                                    style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
+                                <span>⚡ Active Recon</span>
+                                <span style="font-size: 11px; color: var(--text-muted);">(DNS brute-force — intrusive,
+                                    remote only)</span>
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary);">
+                                <input type="checkbox" id="scan-crawl" checked
+                                    style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
+                                <span>🌐 URL Crawling</span>
+                                <span style="font-size: 11px; color: var(--text-muted);">(Find endpoints &
+                                    parameters)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== VULNERABILITY SCAN PANEL ===== -->
+                <div id="modal-vulnscan-panel" style="display: none;">
+                    <div
+                        style="margin-bottom: 10px; padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; font-size: 11px; color: var(--text-muted); border-left: 3px solid #ef4444;">
+                        Enter a target URL. If previously scanned, existing endpoints will be reused. Otherwise,
+                        crawling runs first automatically.
+                    </div>
+
+                    <!-- Existing Scans Banner (hidden by default) -->
+                    <div class="existing-scans-banner" id="modal-existing-scans-banner" style="display: none;">
+                        <div class="existing-scans-header">
+                            <span class="existing-scans-icon">📦</span>
+                            <span class="existing-scans-title">Existing data found!</span>
+                            <button class="existing-scans-dismiss" onclick="dismissModalExistingScans()"
+                                title="Dismiss">✕</button>
+                        </div>
+                        <p class="existing-scans-desc">This target was previously scanned. Skip crawling and use
+                            existing endpoints:</p>
+                        <select id="modal-existing-scan-select" class="existing-scan-select"></select>
+                    </div>
+
+                    <!-- Scan Mode Toggle -->
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label style="font-size: 12px; margin-bottom: 4px;">Scan Mode</label>
+                        <div class="scan-mode-toggle scan-mode-compact" style="display: flex; gap: 6px;">
+                            <button type="button" class="mode-btn mode-btn-compact active" id="modal-mode-full"
+                                onclick="setModalVulnMode('full')" style="flex:1;">
+                                <span class="mode-icon">🚀</span>
+                                <span class="mode-label">Full Scan</span>
+                                <span class="mode-desc">All vulnerability checks</span>
+                            </button>
+                            <button type="button" class="mode-btn mode-btn-compact" id="modal-mode-custom"
+                                onclick="setModalVulnMode('custom')" style="flex:1;">
+                                <span class="mode-icon">🎯</span>
+                                <span class="mode-label">Custom Scan</span>
+                                <span class="mode-desc">Choose specific modules</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Modules (hidden by default) -->
+                    <div class="form-group" id="modal-vulnscan-modules" style="display: none; margin-bottom: 6px;">
+                        <label style="font-size: 12px; margin-bottom: 4px;">Vulnerability Modules</label>
+                        <div class="module-grid module-grid-compact">
+                            <label class="module-card module-card-compact">
+                                <input type="checkbox" id="modal-mod-sqli" checked>
+                                <span class="module-icon">💉</span>
+                                <span class="module-name">SQL Injection</span>
+                                <span class="module-severity severity-high">High</span>
+                            </label>
+                            <label class="module-card module-card-compact disabled">
+                                <input type="checkbox" disabled>
+                                <span class="module-icon">📜</span>
+                                <span class="module-name">XSS</span>
+                                <span class="module-severity severity-med">Medium</span>
+                            </label>
+                            <label class="module-card module-card-compact">
+                                <input type="checkbox" id="modal-mod-pt" checked>
+                                <span class="module-icon">📂</span>
+                                <span class="module-name">Path Traversal</span>
+                                <span class="module-severity severity-high">High</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="scan-submit-btn">Start Scan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-modal">
+        <div class="modal delete-modal">
+            <div class="delete-modal-content">
+                <!-- Animated Warning Icon -->
+                <div class="delete-icon-container">
+                    <div class="delete-icon-ring"></div>
+                    <div class="delete-icon-ring delay"></div>
+                    <div class="delete-icon">
+                        <span>🗑️</span>
+                    </div>
+                </div>
+
+                <h3 class="delete-title">Delete Scan?</h3>
+
+                <p class="delete-description">
+                    Are you sure you want to delete the scan for
+                    <span class="delete-domain" id="delete-scan-domain"></span>?
+                </p>
+
+                <div class="delete-warning-box">
+                    <div class="delete-warning-header">
+                        <span class="warning-icon">⚠️</span>
+                        <span>This action cannot be undone!</span>
+                    </div>
+                    <ul class="delete-items-list">
+                        <li><span class="item-icon">🌐</span> All subdomains will be removed</li>
+                        <li><span class="item-icon">🔗</span> All endpoints will be deleted</li>
+                        <li><span class="item-icon">🔒</span> All vulnerability data will be lost</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="delete-modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="hideDeleteModal()">
+                    <span>✕</span> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteScan()">
+                    <span>🗑️</span> Delete Scan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete All Confirmation Modal -->
+    <div class="modal-overlay" id="delete-all-modal">
+        <div class="modal delete-modal">
+            <div class="delete-modal-content">
+                <!-- Animated Warning Icon -->
+                <div class="delete-icon-container">
+                    <div class="delete-icon-ring"></div>
+                    <div class="delete-icon-ring delay"></div>
+                    <div class="delete-icon">
+                        <span>💣</span>
+                    </div>
+                </div>
+
+                <h3 class="delete-title">Delete ALL Scans?</h3>
+
+                <p class="delete-description">
+                    You are about to permanently delete
+                    <span class="delete-domain" id="delete-all-count">all</span> scans.
+                </p>
+
+                <div class="delete-warning-box">
+                    <div class="delete-warning-header">
+                        <span class="warning-icon">⚠️</span>
+                        <span>This action cannot be undone!</span>
+                    </div>
+                    <ul class="delete-items-list">
+                        <li><span class="item-icon">🎯</span> All scan records will be removed</li>
+                        <li><span class="item-icon">🌐</span> All subdomains will be deleted</li>
+                        <li><span class="item-icon">🔗</span> All endpoints will be deleted</li>
+                        <li><span class="item-icon">🔒</span> All vulnerability data will be lost</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="delete-modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="hideDeleteAllModal()">
+                    <span>✕</span> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteAllScans()">
+                    <span>💣</span> Delete Everything
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=12"></script>
+</body>
+
+
+</html>
