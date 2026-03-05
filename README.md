@@ -7,7 +7,6 @@
   <img src="https://img.shields.io/badge/flask-3.0-green?logo=flask&logoColor=white"/>
   <img src="https://img.shields.io/badge/docker-ready-blue?logo=docker&logoColor=white"/>
   <img src="https://img.shields.io/badge/selenium-4.x-orange?logo=selenium&logoColor=white"/>
-  <img src="https://img.shields.io/badge/license-MIT-purple"/>
 </p>
 
 <p align="center"><b>Automated recon & vulnerability scanning from a real-time web dashboard.</b></p>
