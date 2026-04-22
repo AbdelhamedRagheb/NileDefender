@@ -1,0 +1,39 @@
+# Virtual environments
+my-env/
+venv/
+.venv/
+env/
+
+# Git
+.git/
+.gitignore
+
+# Node modules (frontend deps rebuilt in build stage)
+frontend/node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Runtime data (persisted via volume)
+output/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Secrets (mounted at runtime via docker-compose volume)
+config.ini
+
+# Docs
+*.md
+Documents/
+LICENSE
