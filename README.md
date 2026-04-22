@@ -107,13 +107,6 @@ React SPA (Vite) → Flask REST API + Socket.IO → Scanner Modules → SQLite D
 | **AI Reports** | Groq LLM (llama-3.3-70b) → WeasyPrint PDF |
 | **Database** | SQLite |
 
----
-
-## Screenshots
-
-<p align="center">
-  <img src="Documents/Icon.png" alt="NileDefender Icon" width="150"/>
-</p>
 
 ---
 
