@@ -30,9 +30,6 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# Secrets (mounted at runtime via docker-compose volume)
-config.ini
-
 # Docs
 *.md
 Documents/

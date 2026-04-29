@@ -9,8 +9,6 @@ __pycache__/
 output/niledefender.db
 output/*.db
 
-# Config with secrets
-config.ini
 
 # OS files
 .DS_Store
