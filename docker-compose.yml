@@ -19,8 +19,6 @@ services:
       # (localhost inside Docker = container itself, not the host)
       - "host.docker.internal:host-gateway"
     volumes:
-      # Persist database across container restarts
-      - ./output:/app/output
       # Mount config at runtime (keeps API keys out of the image)
       - ./config.ini:/app/config.ini:ro
     environment:
