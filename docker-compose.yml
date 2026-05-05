@@ -27,3 +27,21 @@ services:
       - PYTHONUNBUFFERED=1
       - RUNNING_IN_DOCKER=1
     restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5677:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5677/
+      - GENERIC_TIMEZONE=Africa/Cairo
+    restart: unless-stopped
+
+volumes:
+  n8n_data:

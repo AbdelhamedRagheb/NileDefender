@@ -33,7 +33,7 @@ from core.database import (
     init_db, get_session, create_scan, update_scan_status,
     save_subdomain, save_endpoint, get_scan_results,
     get_all_scans, get_scan_by_id, get_endpoints, get_subdomains,
-    get_vulnerabilities
+    get_vulnerabilities, save_vulnerability
 )
 
 # Initialize Flask app
@@ -251,6 +251,7 @@ def run_vulnscan_background(scan_id, scan_type='full', modules=None):
             scan_id=scan_id,
             db_path=str(DB_PATH),
             modules=modules,
+            scan_type=scan_type,
             on_progress=on_progress,
             on_endpoint_found=on_endpoint_found,
             cancel_check=lambda: is_scan_cancelled(scan_id)
@@ -260,14 +261,39 @@ def run_vulnscan_background(scan_id, scan_type='full', modules=None):
         
         total_vulns = results.get('total_vulnerabilities_found', 0)
         total_endpoints = results.get('total_endpoints', 0)
+        ai_triggered = results.get('ai_triggered', False)
+        final_status = 'running' if ai_triggered else 'completed'
+        final_msg = 'Static scanners finished. AI Analysis in progress...' if ai_triggered else f'Vulnerability scan completed! Found {total_vulns} vulnerabilities across {total_endpoints} endpoints'
+        
+        # ✅ اكتب الـ status صراحة على thread_session عشان يتحفظ في الداتابيز صح
+        update_scan_status(thread_session, scan_id, final_status)
         
         socketio.emit('vulnscan_completed', {
             'scan_id': scan_id,
-            'status': 'completed',
-            'message': f'Vulnerability scan completed! Found {total_vulns} vulnerabilities across {total_endpoints} endpoints'
+            'status': final_status,
+            'message': final_msg
         }, room=f'scan_{scan_id}')
         
-        print(f"[+] Vuln scan {scan_id} completed successfully")
+        print(f"[+] Vuln scan {scan_id} done. ai_triggered={ai_triggered}, final_status={final_status}")
+        
+        # 🛡️ Safety timeout: لو n8n مبعتش /complete في 90 دقيقة → auto-complete
+        if ai_triggered:
+            def _safety_complete(sid, timeout_sec=10*60):
+                import time as _t
+                _t.sleep(timeout_sec)
+                try:
+                    s = get_session(db_engine)
+                    scan = get_scan_by_id(s, sid)
+                    if scan and scan.status == 'running':
+                        print(f"[!] Safety timeout: scan {sid} still running after {timeout_sec//60}min - auto-completing")
+                        update_scan_status(s, sid, 'completed')
+                        socketio.emit('scan_completed', {'scan_id': sid, 'status': 'completed',
+                            'message': 'Scan auto-completed (AI timeout).'}, room=f'scan_{sid}')
+                    s.close()
+                except Exception as ex:
+                    print(f"[!] Safety timeout error: {ex}")
+            threading.Thread(target=_safety_complete, args=(scan_id,), daemon=True).start()
+        
         workflow.close()
     
     run_scan_with_lifecycle(scan_id, _scan)
@@ -703,6 +729,80 @@ def start_vulnscan(scan_id):
 
 
 
+# ============================================================================
+# n8n AI AGENT ENDPOINT — Receive IDOR findings from the external AI Agent
+# ============================================================================
+
+@app.route('/api/scans/<int:scan_id>/complete', methods=['POST'])
+def mark_scan_complete(scan_id):
+    """Mark a scan as completed (called by n8n after AI analysis)."""
+    try:
+        scan = get_scan_by_id(db_session, scan_id)
+        if not scan:
+            return jsonify({'success': False, 'error': 'Scan not found'}), 404
+            
+        update_scan_status(db_session, scan_id, 'completed')
+        
+        # Notify dashboard
+        socketio.emit('scan_completed', {
+            'scan_id': scan_id,
+            'status': 'completed',
+            'message': 'AI Analysis completed! All vulnerabilities have been saved.'
+        }, room=f'scan_{scan_id}')
+        
+        print(f"[+] Scan {scan_id} marked as completed via Webhook")
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/scans/<int:scan_id>/vulnerabilities', methods=['POST'])
+def add_external_vulnerability(scan_id):
+    """Receive a vulnerability discovered by the n8n AI Agent and save it."""
+    try:
+        data = request.json or {}
+
+        vuln_type  = data.get('vulnerability_type', 'IDOR')
+        severity   = data.get('severity', 'High')
+        url        = data.get('url', '')
+        method     = data.get('method', 'GET')
+        parameter  = data.get('parameter', '')
+        payload    = data.get('payload', '')
+        evidence   = data.get('evidence', '')
+
+        if not url:
+            return jsonify({'success': False, 'error': 'url is required'}), 400
+
+        # Verify scan exists
+        scan = get_scan_by_id(db_session, scan_id)
+        if not scan:
+            return jsonify({'success': False, 'error': 'Scan not found'}), 404
+
+        # 1. Save to database
+        save_vulnerability(
+            db_session, scan_id,
+            vuln_type=vuln_type,
+            severity=severity,
+            url=url,
+            method=method,
+            parameter=parameter,
+            payload=payload,
+            evidence=evidence,
+            vuln_data='Discovered by n8n AI Agent'
+        )
+
+        # 2. Notify dashboard in real-time (same mechanism as internal scanners)
+        emit_progress(
+            scan_id, 'n8n_agent',
+            f'⚠️ AI Agent found {vuln_type}: {url} (param: {parameter})'
+        )
+
+        print(f'[n8n] Saved {vuln_type} vulnerability for scan {scan_id} at {url}')
+        return jsonify({'success': True, 'message': 'Vulnerability saved successfully'})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/scans/<int:scan_id>/vulnerabilities', methods=['GET']) #git

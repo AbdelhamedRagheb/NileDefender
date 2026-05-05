@@ -5,9 +5,13 @@ __pycache__/
 *.pyo
 *.egg-info/
 
+# Sensitive config (API keys) - fill in your own keys
+
 # Runtime data
 output/niledefender.db
 output/*.db
+output/*.db-shm
+output/*.db-wal
 
 
 # OS files
