@@ -265,7 +265,7 @@ def run_vulnscan_background(scan_id, scan_type='full', modules=None):
         final_status = 'running' if ai_triggered else 'completed'
         final_msg = 'Static scanners finished. AI Analysis in progress...' if ai_triggered else f'Vulnerability scan completed! Found {total_vulns} vulnerabilities across {total_endpoints} endpoints'
         
-        # ✅ اكتب الـ status صراحة على thread_session عشان يتحفظ في الداتابيز صح
+        # ✅ Explicitly write status on thread_session to ensure it's persisted in the database correctly
         update_scan_status(thread_session, scan_id, final_status)
         
         socketio.emit('vulnscan_completed', {
@@ -276,7 +276,7 @@ def run_vulnscan_background(scan_id, scan_type='full', modules=None):
         
         print(f"[+] Vuln scan {scan_id} done. ai_triggered={ai_triggered}, final_status={final_status}")
         
-        # 🛡️ Safety timeout: لو n8n مبعتش /complete في 90 دقيقة → auto-complete
+        # 🛡️ Safety timeout: if n8n fails to call /complete within 10 minutes → auto-complete the scan
         if ai_triggered:
             def _safety_complete(sid, timeout_sec=10*60):
                 import time as _t
