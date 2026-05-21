@@ -36,6 +36,7 @@ It works on both **remote domains** (`example.com`) and **local targets** (`http
 | 📝 **HTML Injection Scanner** | Payload reflection analysis |
 | ⚡ **Real-time Updates** | WebSocket (Socket.IO) for live scan progress |
 | 🤖 **AI Report Generation** | Groq LLM generates professional PDF security reports |
+| 🧠 **AI IDOR Agent** | n8n + GPT-4o-mini agent that actively tests endpoints for IDOR |
 | 📊 **Data Export** | JSON/CSV export of all scan data |
 | 🎨 **React Dashboard** | Modern dark navy + teal themed SPA |
 
@@ -107,6 +108,31 @@ React SPA (Vite) → Flask REST API + Socket.IO → Scanner Modules → SQLite D
 | **AI Reports** | Groq LLM (llama-3.3-70b) → WeasyPrint PDF |
 | **Database** | SQLite |
 
+
+---
+
+## 🧠 AI IDOR Agent Setup (n8n)
+
+The IDOR Agent uses **n8n** (included in Docker Compose) + **OpenAI GPT-4o-mini** to actively test endpoints for IDOR vulnerabilities after each Full Scan.
+
+### Setup Steps:
+
+**1. Open n8n:** http://localhost:5677
+
+**2. Create a local account** (first time only — any email/password works)
+
+**3. Import the workflow:**
+- Workflows → Import from file → select `agent_idor.json`
+
+**4. Add OpenAI credential:**
+- Credentials → Add Credential → OpenAI → paste your API Key → Save
+
+**5. Connect credential to AI Agent node:**
+- Open the workflow → click the AI Agent node → select your OpenAI credential
+
+**6. Activate the workflow** (toggle top-right from Inactive → Active)
+
+> 📖 Full details: [N8N_SETUP_GUIDE.md](N8N_SETUP_GUIDE.md)
 
 ---
 

@@ -39,11 +39,12 @@ class VulnWorkflow:
 
     def __init__(self, target_url: str = None, scan_id: int = None,
                  db_path: str = None, output_dir: str = "output",
-                 modules: list = None,
+                 modules: list = None, scan_type: str = 'full',
                  on_progress=None, on_endpoint_found=None,
                  cancel_check=None):
         self.target_url = target_url
         self.scan_id = scan_id
+        self.scan_type = scan_type
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -108,10 +109,14 @@ class VulnWorkflow:
 
         # Step 4: Run selected vulnerability modules
         if self.cancel_check(): return self.results
-        self._run_modules(cookie)
+        ai_triggered = self._run_modules(cookie)
 
-        # Step 5: Mark scan as completed
-        update_scan_status(self.session, self.scan_id, 'completed')
+        # Step 5: Mark scan as completed or keep it running for AI
+        self.results['ai_triggered'] = ai_triggered
+        if ai_triggered:
+            update_scan_status(self.session, self.scan_id, 'running')
+        else:
+            update_scan_status(self.session, self.scan_id, 'completed')
 
         # Step 6: Generate summary
         scan_results = get_scan_results(self.session, self.scan_id)
@@ -256,7 +261,9 @@ class VulnWorkflow:
         
         return cookie
 
-    def _run_modules(self, cookie: str = None):
+    def _run_modules(self, cookie: str = None) -> bool:
+        self._log(f"Starting vulnerability modules...")
+        ai_triggered = False
         self._log(f"Running {len(self.modules)} vulnerability module(s): {', '.join(self.modules)}")
         
         for module_key in self.modules:
@@ -299,6 +306,33 @@ class VulnWorkflow:
                     'targets_scanned': 0,
                     'vulnerabilities_found': 0
                 }
+
+        # --- Smart n8n trigger: only for Full Scans ---
+        try:
+            import configparser, requests as _req, os
+            config = configparser.ConfigParser()
+            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
+            config.read(config_path)
+            
+            if config.has_option('API_KEYS', 'N8N_WEBHOOK_URL') and self.scan_type == 'full':
+                webhook_url = config.get('API_KEYS', 'N8N_WEBHOOK_URL').strip()
+                if webhook_url:
+                    # ✅ Mark as triggered BEFORE the request - any timeout/error is fine
+                    ai_triggered = True
+                    self._log(f"Triggering n8n IDOR Agent (scan_type={self.scan_type})...")
+                    try:
+                        _req.post(webhook_url, json={'scan_id': self.scan_id}, timeout=5)
+                    except Exception as req_err:
+                        # Timeout or connection error is expected (n8n takes time to respond)
+                        self._log(f"n8n webhook sent (response: {type(req_err).__name__})")
+            else:
+                self._log(f"Skipping n8n trigger (scan_type={self.scan_type}, url_configured={config.has_option('API_KEYS', 'N8N_WEBHOOK_URL')})")
+        except Exception as e:
+            self._log(f"Warning: n8n trigger failed: {e}")
+        
+        self._log(f"_run_modules done. ai_triggered={ai_triggered}")
+        return ai_triggered
+
 
     def generate_report(self) -> str:
         scan = get_scan_by_id(self.session, self.scan_id)
