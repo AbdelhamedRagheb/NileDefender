@@ -18,6 +18,12 @@ def _docker_translate_url(url: str) -> str:
     url = url.replace('://127.0.0.1', '://host.docker.internal')
     return url
 
+def _docker_reverse_url(url: str) -> str:
+    """Reverse Docker URL translation for display/storage."""
+    if not url:
+        return url
+    return url.replace('://host.docker.internal', '://localhost')
+
 DB_PATH = "niledefender.db"
 
 RUN_VERBOSE    = True
@@ -308,7 +314,7 @@ def _save_finding(scan_id, url, method, parameter, payload, vuln_subtype, severi
                     """INSERT OR IGNORE INTO vulnerabilities
                     (scan_id, vulnerability_type, severity, url, method, parameter, payload, evidence, vulnerability_data, discovered_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (scan_id, f"Command Injection ({vuln_subtype})", severity, url, method,
+                    (scan_id, f"Command Injection ({vuln_subtype})", severity, _docker_reverse_url(url), method,
                      parameter, payload, evidence, vuln_subtype,
                      time.strftime("%Y-%m-%d %H:%M:%S")),
                 )

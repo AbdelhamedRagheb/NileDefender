@@ -16,6 +16,12 @@ def _docker_translate_url(url: str) -> str:
     url = url.replace('://127.0.0.1', '://host.docker.internal')
     return url
 
+def _docker_reverse_url(url: str) -> str:
+    """Reverse Docker URL translation for display/storage."""
+    if not url:
+        return url
+    return url.replace('://host.docker.internal', '://localhost')
+
 SKIP_PARAMS = {
     "form", "submit", "action", "csrf", "token", "_token", "security_level",
     "login", "password", "pass", "passwd", "username", "user", "email",
@@ -322,7 +328,7 @@ def save_finding(scan_id, url, method, param, payload, status, severity, evidenc
                     """INSERT INTO vulnerabilities(scan_id, vulnerability_type, severity, url, method,
                         parameter, payload, evidence, vulnerability_data, discovered_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
-                    (scan_id, "HTML Injection", severity, url, method,
+                    (scan_id, "HTML Injection", severity, _docker_reverse_url(url), method,
                      param, payload, evidence,f"Reflection status: {status}",
                      time.strftime("%Y-%m-%d %H:%M:%S")),)
                 conn.commit()

@@ -16,6 +16,9 @@ COPY frontend/ ./
 RUN npm run build
 
 
+# ---------- (dalfox is downloaded as a prebuilt binary in Stage 2) ----------
+
+
 # ---------- Stage 2: Python runtime ----------
 FROM python:3.13-slim
 
@@ -41,7 +44,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sqlmap \
     # Build tools for pip packages that compile C extensions
     gcc \
+    # curl for downloading dalfox with retries
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Install dalfox (XSS scanner) — prebuilt binary from GitHub
+ARG DALFOX_VERSION=2.13.0
+RUN ARCH=$(dpkg --print-architecture) \
+    && if [ "$ARCH" = "arm64" ]; then DALFOX_ARCH="arm64"; else DALFOX_ARCH="amd64"; fi \
+    && echo "Downloading dalfox v${DALFOX_VERSION} for linux-${DALFOX_ARCH}..." \
+    && curl -fSL --retry 5 --retry-delay 3 --retry-connrefused \
+       "https://github.com/hahwul/dalfox/releases/download/v${DALFOX_VERSION}/dalfox-linux-${DALFOX_ARCH}.tar.gz" \
+       -o /tmp/dalfox.tar.gz \
+    && tar -xzf /tmp/dalfox.tar.gz -C /tmp/ \
+    && mv /tmp/dalfox-linux-${DALFOX_ARCH} /usr/local/bin/dalfox \
+    && chmod +x /usr/local/bin/dalfox \
+    && rm -rf /tmp/dalfox* \
+    && dalfox version
 
 # Install geckodriver for Selenium + Firefox (pinned for reproducibility)
 ARG GECKO_VERSION=v0.35.0

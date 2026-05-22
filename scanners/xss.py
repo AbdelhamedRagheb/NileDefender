@@ -35,6 +35,12 @@ def _docker_translate_url(url: str) -> str:
     url = url.replace('://127.0.0.1', '://host.docker.internal')
     return url
 
+def _docker_reverse_url(url: str) -> str:
+    """Reverse Docker URL translation for display/storage."""
+    if not url:
+        return url
+    return url.replace('://host.docker.internal', '://localhost')
+
 DB_PATH  = "niledefender.db"
 WORKERS  = 3
 LIMIT    = 20
@@ -209,7 +215,7 @@ def scan_target(target, scan_id: int, db_path=None, cookie=None, cancel_check=No
                             "INSERT OR IGNORE INTO vulnerabilities "
                             "(scan_id, vulnerability_type, severity, url, method, parameter, payload, evidence, vulnerability_data, discovered_at) "
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            (scan_id, "Cross-Site Scripting (XSS)", "High", url, method,
+                            (scan_id, "Cross-Site Scripting (XSS)", "High", _docker_reverse_url(url), method,
                              parameter, payload, "dalfox detection", content,
                              time.strftime("%Y-%m-%d %H:%M:%S")))
                         conn.commit()
