@@ -19,6 +19,13 @@ def _docker_translate_url(url: str) -> str:
     url = url.replace('://127.0.0.1', '://host.docker.internal')
     return url
 
+def _docker_reverse_url(url: str) -> str:
+    """Reverse Docker URL translation for display/storage — convert
+    host.docker.internal back to localhost so the user sees clean URLs."""
+    if not url:
+        return url
+    return url.replace('://host.docker.internal', '://localhost')
+
 # Import recon modules
 from recon.local_crawler import LocalCrawler, is_local_target, quick_login
 
@@ -166,7 +173,8 @@ class VulnWorkflow:
         if is_local_target(target_url):
             # ======= LOCAL TARGET: Selenium crawler =======
             # Register target as subdomain entry
-            save_subdomain(self.session, self.scan_id, target_url,
+            # Save the user-facing URL (localhost), not the Docker-internal one
+            save_subdomain(self.session, self.scan_id, _docker_reverse_url(target_url),
                           is_alive=1, status_code=200, title='Local Target')
             
             self._log("Starting local crawler (Selenium)...")
@@ -307,31 +315,8 @@ class VulnWorkflow:
                     'vulnerabilities_found': 0
                 }
 
-        # --- Smart n8n trigger: only for Full Scans ---
-        try:
-            import configparser, requests as _req, os
-            config = configparser.ConfigParser()
-            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
-            config.read(config_path)
-            
-            if config.has_option('API_KEYS', 'N8N_WEBHOOK_URL') and self.scan_type == 'full':
-                webhook_url = config.get('API_KEYS', 'N8N_WEBHOOK_URL').strip()
-                if webhook_url:
-                    # ✅ Mark as triggered BEFORE the request - any timeout/error is fine
-                    ai_triggered = True
-                    self._log(f"Triggering n8n IDOR Agent (scan_type={self.scan_type})...")
-                    try:
-                        _req.post(webhook_url, json={'scan_id': self.scan_id}, timeout=5)
-                    except Exception as req_err:
-                        # Timeout or connection error is expected (n8n takes time to respond)
-                        self._log(f"n8n webhook sent (response: {type(req_err).__name__})")
-            else:
-                self._log(f"Skipping n8n trigger (scan_type={self.scan_type}, url_configured={config.has_option('API_KEYS', 'N8N_WEBHOOK_URL')})")
-        except Exception as e:
-            self._log(f"Warning: n8n trigger failed: {e}")
-        
-        self._log(f"_run_modules done. ai_triggered={ai_triggered}")
-        return ai_triggered
+        self._log(f"_run_modules done.")
+        return False
 
 
     def generate_report(self) -> str:

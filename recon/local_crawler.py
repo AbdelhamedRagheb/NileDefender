@@ -137,6 +137,11 @@ class LocalCrawler:
         
         self.endpoint_keys.add(key)
         
+        # Reverse Docker URL translation so stored URLs show localhost
+        if 'host.docker.internal' in endpoint.get('url', ''):
+            endpoint['url'] = endpoint['url'].replace(
+                '://host.docker.internal', '://localhost')
+        
         # Always attach session cookies
         if self.session_cookies and 'cookies' not in endpoint:
             endpoint['cookies'] = dict(self.session_cookies)

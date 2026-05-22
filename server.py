@@ -267,11 +267,10 @@ def run_vulnscan_background(scan_id, scan_type='full', modules=None):
         results = workflow.run()
         total_vulns = results.get('total_vulnerabilities_found', 0)
         total_endpoints = results.get('total_endpoints', 0)
-        ai_triggered = results.get('ai_triggered', False)
-        final_status = 'running' if ai_triggered else 'completed'
-        final_msg = 'Static scanners finished. AI Analysis in progress...' if ai_triggered else f'Vulnerability scan completed! Found {total_vulns} vulnerabilities across {total_endpoints} endpoints'
         
-        # ✅ Explicitly write status on thread_session to ensure it's persisted in the database correctly
+        final_status = 'completed'
+        final_msg = f'Vulnerability scan completed! Found {total_vulns} vulnerabilities across {total_endpoints} endpoints'
+        
         update_scan_status(thread_session, scan_id, final_status)
         
         socketio.emit('vulnscan_completed', {
