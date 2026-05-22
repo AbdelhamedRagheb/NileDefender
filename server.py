@@ -734,6 +734,78 @@ def start_vulnscan(scan_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ============================================================================
+# n8n AI AGENT ENDPOINTS — Receive IDOR findings from the external AI Agent
+# ============================================================================
+
+@app.route('/api/scans/<int:scan_id>/complete', methods=['POST'])
+def mark_scan_complete(scan_id):
+    """Mark a scan as completed (called by n8n after AI analysis)."""
+    try:
+        scan = get_scan_by_id(db_session, scan_id)
+        if not scan:
+            return jsonify({'success': False, 'error': 'Scan not found'}), 404
+
+        update_scan_status(db_session, scan_id, 'completed')
+
+        socketio.emit('scan_completed', {
+            'scan_id': scan_id,
+            'status': 'completed',
+            'message': 'AI Analysis completed! All vulnerabilities have been saved.'
+        }, room=f'scan_{scan_id}')
+
+        print(f"[+] Scan {scan_id} marked as completed via Webhook")
+        return jsonify({'success': True})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/scans/<int:scan_id>/vulnerabilities', methods=['POST'])
+def add_external_vulnerability(scan_id):
+    """Receive a vulnerability discovered by the n8n AI Agent and save it."""
+    try:
+        data = request.json or {}
+
+        vuln_type  = data.get('vulnerability_type', 'IDOR')
+        severity   = data.get('severity', 'High')
+        url        = data.get('url', '')
+        method     = data.get('method', 'GET')
+        parameter  = data.get('parameter', '')
+        payload    = data.get('payload', '')
+        evidence   = data.get('evidence', '')
+
+        if not url:
+            return jsonify({'success': False, 'error': 'url is required'}), 400
+
+        scan = get_scan_by_id(db_session, scan_id)
+        if not scan:
+            return jsonify({'success': False, 'error': 'Scan not found'}), 404
+
+        save_vulnerability(
+            db_session, scan_id,
+            vuln_type=vuln_type,
+            severity=severity,
+            url=url,
+            method=method,
+            parameter=parameter,
+            payload=payload,
+            evidence=evidence,
+            vuln_data='Discovered by n8n AI Agent'
+        )
+
+        emit_progress(
+            scan_id, 'n8n_agent',
+            f'⚠️ AI Agent found {vuln_type}: {url} (param: {parameter})'
+        )
+
+        print(f'[n8n] Saved {vuln_type} for scan {scan_id} at {url}')
+        return jsonify({'success': True, 'message': 'Vulnerability saved successfully'})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/scans/<int:scan_id>/vulnerabilities', methods=['GET']) #git
 def get_scan_vulnerabilities(scan_id):
     try:
