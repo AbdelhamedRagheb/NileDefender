@@ -13,7 +13,7 @@ export default function NewScanModal({ show, onClose, onScanCreated }) {
   const [active, setActive] = useState(false);
   const [crawl, setCrawl] = useState(true);
   const [vulnMode, setVulnMode] = useState('full');
-  const [modules, setModules] = useState({ sqli: true, pt: true, htmli: true, xss: true, csrf: true, idor: true });
+  const [modules, setModules] = useState({ sqli: true, pt: true, htmli: true, xss: true, idor: true, cmdi: true });
   const [loading, setLoading] = useState(false);
 
   // Existing scans lookup
@@ -29,7 +29,7 @@ export default function NewScanModal({ show, onClose, onScanCreated }) {
     setCrawl(true);
     setScanType('recon');
     setVulnMode('full');
-    setModules({ sqli: true, pt: true, htmli: true, xss: true, csrf: true, idor: true });
+    setModules({ sqli: true, pt: true, htmli: true, xss: true, idor: true, cmdi: true });
     setLoading(false);
     setExistingScans([]);
     setSelectedExisting(null);
@@ -81,14 +81,14 @@ export default function NewScanModal({ show, onClose, onScanCreated }) {
         // Vuln scan
         const mods = [];
         if (vulnMode === 'full') {
-          mods.push('sqli', 'pt', 'htmli', 'xss', 'csrf', 'idor');
+          mods.push('sqli', 'pt', 'htmli', 'xss', 'idor', 'cmdi');
         } else {
           if (modules.sqli) mods.push('sqli');
           if (modules.pt) mods.push('pt');
           if (modules.htmli) mods.push('htmli');
           if (modules.xss) mods.push('xss');
-          if (modules.csrf) mods.push('csrf');
           if (modules.idor) mods.push('idor');
+          if (modules.cmdi) mods.push('cmdi');
         }
         if (mods.length === 0) {
           alert('Please select at least one module.');
@@ -259,16 +259,17 @@ export default function NewScanModal({ show, onClose, onScanCreated }) {
                       <span className="module-name">HTML Injection</span>
                       <span className="module-severity severity-high">High</span>
                     </label>
-                    <label className="module-card">
-                      <input type="checkbox" checked={modules.csrf} onChange={(e) => setModules({ ...modules, csrf: e.target.checked })} />
-                      <span className="module-icon">🔄</span>
-                      <span className="module-name">CSRF</span>
-                      <span className="module-severity severity-med">Medium</span>
-                    </label>
+
                     <label className="module-card">
                       <input type="checkbox" checked={modules.idor} onChange={(e) => setModules({ ...modules, idor: e.target.checked })} />
                       <span className="module-icon">🔓</span>
                       <span className="module-name">IDOR</span>
+                      <span className="module-severity severity-high">High</span>
+                    </label>
+                    <label className="module-card">
+                      <input type="checkbox" checked={modules.cmdi} onChange={(e) => setModules({ ...modules, cmdi: e.target.checked })} />
+                      <span className="module-icon">⚡</span>
+                      <span className="module-name">Command Injection</span>
                       <span className="module-severity severity-high">High</span>
                     </label>
                   </div>

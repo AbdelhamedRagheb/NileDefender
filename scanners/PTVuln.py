@@ -15,6 +15,12 @@ def _docker_translate_url(url: str) -> str:
     url = url.replace('://127.0.0.1', '://host.docker.internal')
     return url
 
+def _docker_reverse_url(url: str) -> str:
+    """Reverse Docker URL translation for display/storage."""
+    if not url:
+        return url
+    return url.replace('://host.docker.internal', '://localhost')
+
 
 # Define common file extensions to check for in the parameter values
 exctantions = ['.jpg', '.png', '.svg', '.txt', '.pdf', '.docx', '.xlsx', '.pptx', '.zip', '.tar.gz', '.rar', '.7z', '.exe', '.dll', '.sys', '.bin', '.iso']
@@ -160,7 +166,7 @@ def _save_vulnerability(db_path, scan_id, url, method, parameter, payload, evide
                (scan_id, vulnerability_type, severity, url, method,
                 parameter, payload, evidence, discovered_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (scan_id, 'Path Traversal', 'High', url, method,
+            (scan_id, 'Path Traversal', 'High', _docker_reverse_url(url), method,
              parameter, payload, evidence, datetime.utcnow().isoformat())
         )
         conn.commit()

@@ -79,6 +79,13 @@ def _docker_translate_url(url: str) -> str:
     url = url.replace('://127.0.0.1', '://host.docker.internal')
     return url
 
+def _docker_reverse_url(url: str) -> str:
+    """Reverse Docker URL translation for display/storage — convert
+    host.docker.internal back to localhost so the user sees clean URLs."""
+    if not url:
+        return url
+    return url.replace('://host.docker.internal', '://localhost')
+
 
 def is_scan_cancelled(scan_id):
     return scan_id in cancelled_scans
@@ -258,14 +265,12 @@ def run_vulnscan_background(scan_id, scan_type='full', modules=None):
         )
         
         results = workflow.run()
-        
         total_vulns = results.get('total_vulnerabilities_found', 0)
         total_endpoints = results.get('total_endpoints', 0)
-        ai_triggered = results.get('ai_triggered', False)
-        final_status = 'running' if ai_triggered else 'completed'
-        final_msg = 'Static scanners finished. AI Analysis in progress...' if ai_triggered else f'Vulnerability scan completed! Found {total_vulns} vulnerabilities across {total_endpoints} endpoints'
         
-        # ✅ Explicitly write status on thread_session to ensure it's persisted in the database correctly
+        final_status = 'completed'
+        final_msg = f'Vulnerability scan completed! Found {total_vulns} vulnerabilities across {total_endpoints} endpoints'
+        
         update_scan_status(thread_session, scan_id, final_status)
         
         socketio.emit('vulnscan_completed', {
@@ -314,7 +319,8 @@ def run_local_scan_background(target_url, scan_id):
         
         # Save the base URL as a "subdomain" entry so stats work
         emit_progress(scan_id, 'local_crawl', 'Registering local target...')
-        save_subdomain(thread_session, scan_id, effective_url,
+        # Save the user-facing URL (localhost), not the Docker-internal one
+        save_subdomain(thread_session, scan_id, _docker_reverse_url(effective_url),
                       is_alive=1, status_code=200, title='Local Target')
         
         # Run Selenium crawler
@@ -728,83 +734,6 @@ def start_vulnscan(scan_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-
-# ============================================================================
-# n8n AI AGENT ENDPOINT — Receive IDOR findings from the external AI Agent
-# ============================================================================
-
-@app.route('/api/scans/<int:scan_id>/complete', methods=['POST'])
-def mark_scan_complete(scan_id):
-    """Mark a scan as completed (called by n8n after AI analysis)."""
-    try:
-        scan = get_scan_by_id(db_session, scan_id)
-        if not scan:
-            return jsonify({'success': False, 'error': 'Scan not found'}), 404
-            
-        update_scan_status(db_session, scan_id, 'completed')
-        
-        # Notify dashboard
-        socketio.emit('scan_completed', {
-            'scan_id': scan_id,
-            'status': 'completed',
-            'message': 'AI Analysis completed! All vulnerabilities have been saved.'
-        }, room=f'scan_{scan_id}')
-        
-        print(f"[+] Scan {scan_id} marked as completed via Webhook")
-        return jsonify({'success': True})
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/scans/<int:scan_id>/vulnerabilities', methods=['POST'])
-def add_external_vulnerability(scan_id):
-    """Receive a vulnerability discovered by the n8n AI Agent and save it."""
-    try:
-        data = request.json or {}
-
-        vuln_type  = data.get('vulnerability_type', 'IDOR')
-        severity   = data.get('severity', 'High')
-        url        = data.get('url', '')
-        method     = data.get('method', 'GET')
-        parameter  = data.get('parameter', '')
-        payload    = data.get('payload', '')
-        evidence   = data.get('evidence', '')
-
-        if not url:
-            return jsonify({'success': False, 'error': 'url is required'}), 400
-
-        # Verify scan exists
-        scan = get_scan_by_id(db_session, scan_id)
-        if not scan:
-            return jsonify({'success': False, 'error': 'Scan not found'}), 404
-
-        # 1. Save to database
-        save_vulnerability(
-            db_session, scan_id,
-            vuln_type=vuln_type,
-            severity=severity,
-            url=url,
-            method=method,
-            parameter=parameter,
-            payload=payload,
-            evidence=evidence,
-            vuln_data='Discovered by n8n AI Agent'
-        )
-
-        # 2. Notify dashboard in real-time (same mechanism as internal scanners)
-        emit_progress(
-            scan_id, 'n8n_agent',
-            f'⚠️ AI Agent found {vuln_type}: {url} (param: {parameter})'
-        )
-
-        print(f'[n8n] Saved {vuln_type} vulnerability for scan {scan_id} at {url}')
-        return jsonify({'success': True, 'message': 'Vulnerability saved successfully'})
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
 @app.route('/api/scans/<int:scan_id>/vulnerabilities', methods=['GET']) #git
 def get_scan_vulnerabilities(scan_id):
     try:
@@ -881,21 +810,33 @@ def get_scan_subdomains(scan_id):
 def get_scan_endpoints(scan_id):
     try:
         endpoints = get_endpoints(db_session, scan_id)
-        
+
+        # If the request comes from inside Docker,
+        # translate localhost URLs to host.docker.internal so the caller
+        # can actually reach services on the host machine.
+        caller_ip = request.remote_addr or ''
+        is_docker_caller = not caller_ip.startswith('127.')
+
+        def _translate(url):
+            if is_docker_caller and url:
+                return url.replace('://localhost', '://host.docker.internal') \
+                          .replace('://127.0.0.1', '://host.docker.internal')
+            return url
+
         result = []
         for e in endpoints:
             result.append({
                 'id': e.id if hasattr(e, 'id') else None,
-                'url': e.url if hasattr(e, 'url') else '',
+                'url': _translate(e.url if hasattr(e, 'url') else ''),
                 'method': e.method if hasattr(e, 'method') else 'GET',
                 'parameters': e.parameters if hasattr(e, 'parameters') else {},
                 'body_params': e.body_params if hasattr(e, 'body_params') else {},
                 'source': e.source if hasattr(e, 'source') else '',
                 'form_details': e.form_details if hasattr(e, 'form_details') else {}
             })
-        
+
         return jsonify({'success': True, 'endpoints': result})
-    
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

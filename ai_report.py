@@ -1,12 +1,3 @@
-"""
-NileDefender - AI Security Report Generator (HTML → PDF)
-Simple: Read vulns → AI generates HTML report → Convert to PDF
-
-Usage:
-    python ai_report_pdf.py --db niledefender.db
-    python ai_report_pdf.py --db niledefender.db --pdf my_report.pdf
-"""
-
 from groq import Groq
 import json
 import configparser
