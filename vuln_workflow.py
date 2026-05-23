@@ -329,7 +329,7 @@ class VulnWorkflow:
                     ai_triggered = True
                     self._log(f"Triggering n8n IDOR Agent (scan_type={self.scan_type})...")
                     try:
-                        _req.post(webhook_url, json={'scan_id': self.scan_id}, timeout=5)
+                        _req.post(webhook_url, json={'scan_id': self.scan_id, 'cookie': cookie}, timeout=5)
                     except Exception as req_err:
                         self._log(f"n8n webhook sent (response: {type(req_err).__name__})")
             else:
