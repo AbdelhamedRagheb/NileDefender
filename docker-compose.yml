@@ -1,29 +1,74 @@
 # ============================================================
-# NileDefender — Docker Compose
+# NileDefender — Full Stack Docker Compose
 # ============================================================
 # Usage:
-#   docker compose up --build        # Build & start
-#   docker compose up -d             # Start in background
+#   docker compose up --build -d     # Build & start everything
 #   docker compose down              # Stop & remove
 #   docker compose logs -f           # View logs
+#
+# Services:
+#   niledefender → http://localhost:5000
+#   n8n          → http://localhost:5677  (workflow automation)
+#   bwapp        → http://localhost:8080  (vulnerable target for testing)
 # ============================================================
 
 services:
+
+  # ── NileDefender ────────────────────────────────────────
   niledefender:
     build: .
     container_name: niledefender
     ports:
       - "5000:5000"
     extra_hosts:
-      # Allow scanning services running on the host machine
-      # (localhost inside Docker = container itself, not the host)
       - "host.docker.internal:host-gateway"
     volumes:
-      # Persist database across container restarts
       - ./output:/app/output
-      # Mount config at runtime (keeps API keys out of the image)
       - ./config.ini:/app/config.ini:ro
     environment:
       - PYTHONUNBUFFERED=1
       - RUNNING_IN_DOCKER=1
+    depends_on:
+      - n8n
+      - bwapp
     restart: unless-stopped
+    networks:
+      - niledefender-net
+
+  # ── n8n AI Workflow Engine ───────────────────────────────
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5677:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5677
+      - EXECUTIONS_PROCESS=main
+      - N8N_HTTP_REQUEST_TIMEOUT=300000
+    restart: unless-stopped
+    networks:
+      - niledefender-net
+
+  # ── bWAPP (Vulnerable Target for Testing) ───────────────
+  bwapp:
+    image: raesene/bwapp
+    container_name: bwapp
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - niledefender-net
+
+networks:
+  niledefender-net:
+    driver: bridge
+
+volumes:
+  n8n_data:
+
