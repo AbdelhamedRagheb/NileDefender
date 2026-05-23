@@ -9,7 +9,16 @@
 # Services:
 #   niledefender → http://localhost:5000
 #   n8n          → http://localhost:5677  (workflow automation)
-#   bwapp        → http://localhost:8080  (vulnerable target for testing)
+#   bwapp        → http://localhost:8080  (vulnerable target)
+#
+# First-time setup:
+#   1. docker compose up --build -d
+#   2. Visit http://localhost:8080/install.php  → initialize bWAPP
+#   3. Visit http://localhost:5677              → setup n8n account
+#   4. Import agent_idor.json workflow into n8n
+#   5. Add OpenAI API key credential in n8n
+#   6. Activate the workflow
+#   7. Visit http://localhost:5000 → start scanning!
 # ============================================================
 
 services:
@@ -37,19 +46,18 @@ services:
 
   # ── n8n AI Workflow Engine ───────────────────────────────
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    image: n8nio/n8n
     container_name: n8n
     ports:
       - "5677:5678"
     volumes:
       - n8n_data:/home/node/.n8n
     environment:
-      - N8N_BASIC_AUTH_ACTIVE=false
       - N8N_HOST=localhost
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5677
-      - EXECUTIONS_PROCESS=main
+      - WEBHOOK_URL=http://localhost:5677/
+      - GENERIC_TIMEZONE=Africa/Cairo
       - N8N_HTTP_REQUEST_TIMEOUT=300000
     restart: unless-stopped
     networks:
@@ -71,4 +79,3 @@ networks:
 
 volumes:
   n8n_data:
-
