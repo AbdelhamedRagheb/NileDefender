@@ -65,9 +65,13 @@ class VulnWorkflow:
         self.session = get_session(self.db_engine)
         
         # Module selection
+        self.trigger_idor = (self.scan_type == 'full')
+
         if modules:
             self.modules = [m for m in modules if m in SCANNER_MODULES]
-            unknown = [m for m in modules if m not in SCANNER_MODULES]
+            if 'idor' in modules:
+                self.trigger_idor = True
+            unknown = [m for m in modules if m not in SCANNER_MODULES and m != 'idor']
             if unknown:
                 print(f"[!] Unknown modules (ignored): {', '.join(unknown)}")
                 print(f"    Available modules: {', '.join(SCANNER_MODULES.keys())}")
@@ -315,25 +319,25 @@ class VulnWorkflow:
                     'vulnerabilities_found': 0
                 }
 
-        # --- Smart n8n trigger: only for Full Scans ---
+        # --- Smart n8n trigger: IDOR ---
         try:
             import configparser, requests as _req, os
             config = configparser.ConfigParser()
             config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
             config.read(config_path)
 
-            if config.has_option('API_KEYS', 'N8N_WEBHOOK_URL') and self.scan_type == 'full':
+            if config.has_option('API_KEYS', 'N8N_WEBHOOK_URL') and self.trigger_idor:
                 webhook_url = config.get('API_KEYS', 'N8N_WEBHOOK_URL').strip()
                 if webhook_url:
                     # Mark as triggered BEFORE the request - timeout/error is expected
                     ai_triggered = True
-                    self._log(f"Triggering n8n IDOR Agent (scan_type={self.scan_type})...")
+                    self._log(f"Triggering n8n IDOR Agent (scan_type={self.scan_type}, modules={self.modules})...")
                     try:
                         _req.post(webhook_url, json={'scan_id': self.scan_id, 'cookie': cookie}, timeout=5)
                     except Exception as req_err:
                         self._log(f"n8n webhook sent (response: {type(req_err).__name__})")
             else:
-                self._log(f"Skipping n8n trigger (scan_type={self.scan_type})")
+                self._log(f"Skipping n8n trigger (trigger_idor={self.trigger_idor})")
         except Exception as e:
             self._log(f"Warning: n8n trigger failed: {e}")
 
