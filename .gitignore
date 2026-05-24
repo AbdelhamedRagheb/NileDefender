@@ -6,6 +6,7 @@ __pycache__/
 *.egg-info/
 
 # Sensitive config (API keys) - fill in your own keys
+config.ini
 
 # Runtime data
 output/niledefender.db
