@@ -1,4 +1,4 @@
-from groq import Groq
+from openai import OpenAI
 import json
 import configparser
 import argparse
@@ -17,13 +17,17 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _client = None
 
 def _get_client():
-    """Lazily initialize the Groq client."""
+    """Lazily initialize the OpenAI client."""
     global _client
     if _client is None:
         config = configparser.ConfigParser()
         config.read(os.path.join(SCRIPT_DIR, 'config.ini'))
-        api_key = config.get('API_KEYS', 'groq')
-        _client = Groq(api_key=api_key)
+        try:
+            api_key = config.get('API_KEYS', 'openai')
+        except configparser.NoOptionError:
+            print("[!] Error: 'openai' API key is missing from config.ini under [API_KEYS]")
+            exit(1)
+        _client = OpenAI(api_key=api_key)
     return _client
 
 
@@ -202,7 +206,7 @@ SECTION 7 - CONCLUSION:
 - The report must be EASY TO READ with proper spacing and clear visual hierarchy"""
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.4,
         max_tokens=8000
