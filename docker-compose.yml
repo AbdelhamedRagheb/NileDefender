@@ -45,6 +45,8 @@ services:
   n8n:
     image: n8nio/n8n
     container_name: n8n
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5677:5678"
     volumes:
@@ -56,6 +58,8 @@ services:
       - WEBHOOK_URL=http://localhost:5677/
       - GENERIC_TIMEZONE=Africa/Cairo
       - N8N_HTTP_REQUEST_TIMEOUT=300000
+      - EXECUTIONS_TIMEOUT=600
+      - EXECUTIONS_TIMEOUT_MAX=1200
     restart: unless-stopped
     networks:
       - niledefender-net
