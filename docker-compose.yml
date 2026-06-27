@@ -60,6 +60,11 @@ services:
       - N8N_HTTP_REQUEST_TIMEOUT=300000
       - EXECUTIONS_TIMEOUT=600
       - EXECUTIONS_TIMEOUT_MAX=1200
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     restart: unless-stopped
     networks:
       - niledefender-net

@@ -94,6 +94,8 @@ class VulnWorkflow:
         }
 
     def _log(self, message: str):
+        # Normalize URLs in logs so they show localhost instead of host.docker.internal
+        message = _docker_reverse_url(message)
         print(f"[VulnWorkflow] {message}")
         if self.on_progress:
             self.on_progress(message)

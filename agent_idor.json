@@ -129,7 +129,7 @@
     },
     {
       "parameters": {
-        "url": "=http://niledefender:5000/api/scans/{{ $('Webhook').item.json.body.scan_id }}/endpoints\n",
+        "url": "=http://niledefender:5000/api/scans/{{ $('Webhook').item.json.body.scan_id }}/endpoints?docker=1\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",

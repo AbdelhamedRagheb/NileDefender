@@ -96,6 +96,8 @@ def is_scan_cancelled(scan_id):
 # ============================================================================
 
 def emit_progress(scan_id, phase, message, progress=None):
+    # Normalize URLs in progress messages so the UI shows localhost, not host.docker.internal
+    message = _docker_reverse_url(message)
     socketio.emit('scan_update', {
         'scan_id': scan_id,
         'status': 'running',
@@ -471,6 +473,12 @@ def get_scan_details(scan_id):
         if not results:
             return jsonify({'success': False, 'error': 'Scan not found'}), 404
         
+        # Normalize all URLs to localhost for display
+        for ep in results.get('endpoints', []):
+            ep['url'] = _docker_reverse_url(ep.get('url', ''))
+        for v in results.get('vulnerabilities', []):
+            v['url'] = _docker_reverse_url(v.get('url', ''))
+        
         return jsonify({
             'success': True,
             'scan': results
@@ -778,6 +786,9 @@ def add_external_vulnerability(scan_id):
         if not url:
             return jsonify({'success': False, 'error': 'url is required'}), 400
 
+        # Normalize Docker-internal URL to localhost before storing
+        url = _docker_reverse_url(url)
+
         scan = get_scan_by_id(db_session, scan_id)
         if not scan:
             return jsonify({'success': False, 'error': 'Scan not found'}), 404
@@ -818,7 +829,7 @@ def get_scan_vulnerabilities(scan_id):
                 'id': v.id,
                 'type': v.vulnerability_type,
                 'severity': v.severity,
-                'url': v.url,
+                'url': _docker_reverse_url(v.url),
                 'method': v.method,
                 'parameter': v.parameter,
                 'payload': v.payload,
@@ -866,7 +877,7 @@ def get_scan_subdomains(scan_id):
         for s in subdomains:
             result.append({
                 'id': s.id,
-                'subdomain': s.subdomain,
+                'subdomain': _docker_reverse_url(s.subdomain),
                 'is_alive': s.is_alive,
                 'status_code': s.status_code,
                 'title': s.title or ''
@@ -883,17 +894,20 @@ def get_scan_endpoints(scan_id):
     try:
         endpoints = get_endpoints(db_session, scan_id)
 
-        # If the request comes from inside Docker,
-        # translate localhost URLs to host.docker.internal so the caller
-        # can actually reach services on the host machine.
-        caller_ip = request.remote_addr or ''
-        is_docker_caller = not caller_ip.startswith('127.')
+        # Use ?docker=1 query param for n8n/Docker callers that need
+        # host.docker.internal URLs to reach host services.
+        # Default behavior: return localhost URLs for the dashboard.
+        wants_docker = request.args.get('docker', '0') == '1'
 
         def _translate(url):
-            if is_docker_caller and url:
+            if not url:
+                return url
+            if wants_docker:
+                # n8n or other Docker service — needs host.docker.internal to reach host
                 return url.replace('://localhost', '://host.docker.internal') \
                           .replace('://127.0.0.1', '://host.docker.internal')
-            return url
+            # Browser/dashboard — always show localhost
+            return _docker_reverse_url(url)
 
         result = []
         for e in endpoints:
@@ -1013,7 +1027,7 @@ def get_all_subdomains():
                     'id': s.id,
                     'scan_id': scan.id,
                     'domain': scan.domain,
-                    'subdomain': s.subdomain,
+                    'subdomain': _docker_reverse_url(s.subdomain),
                     'status_code': s.status_code,
                     'title': s.title or ''
                 })
@@ -1035,7 +1049,7 @@ def get_all_endpoints():
                     'id': e.id if hasattr(e, 'id') else None,
                     'scan_id': scan.id,
                     'domain': scan.domain,
-                    'url': e.url if hasattr(e, 'url') else '',
+                    'url': _docker_reverse_url(e.url if hasattr(e, 'url') else ''),
                     'method': e.method if hasattr(e, 'method') else 'GET',
                     'parameters': e.parameters if hasattr(e, 'parameters') else {},
                     'body_params': e.body_params if hasattr(e, 'body_params') else {},
@@ -1061,7 +1075,7 @@ def get_all_vulnerabilities():
                     'domain': scan.domain,
                     'type': v.vulnerability_type,
                     'severity': v.severity,
-                    'url': v.url,
+                    'url': _docker_reverse_url(v.url),
                     'method': v.method,
                     'parameter': v.parameter,
                     'payload': v.payload,

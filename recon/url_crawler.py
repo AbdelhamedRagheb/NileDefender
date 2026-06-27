@@ -52,6 +52,10 @@ class URLCrawler:
     def _notify_endpoint(self, endpoint: Dict):
         if self.on_endpoint_found:
             try:
+                # Normalize URL for storage
+                if endpoint.get('url') and 'host.docker.internal' in endpoint['url']:
+                    endpoint['url'] = endpoint['url'].replace('://host.docker.internal', '://localhost')
+                
                 self.on_endpoint_found(endpoint)
             except Exception as e:
                 print(f"[!] Callback error: {e}")
