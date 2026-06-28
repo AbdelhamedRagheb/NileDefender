@@ -1,72 +1,107 @@
 <p align="center">
-  <img src="Documents/banner.png" alt="NileDefender" width="600"/>
+  <img src="Documents/banner.png" alt="NileDefender Banner" width="700"/>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/python-3.13-blue?logo=python&logoColor=white"/>
-  <img src="https://img.shields.io/badge/flask-3.0-green?logo=flask&logoColor=white"/>
-  <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=white"/>
-  <img src="https://img.shields.io/badge/docker-ready-blue?logo=docker&logoColor=white"/>
-  <img src="https://img.shields.io/badge/selenium-4.x-orange?logo=selenium&logoColor=white"/>
+  <img src="https://img.shields.io/badge/python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white"/>
+  <img src="https://img.shields.io/badge/react-19-61DAFB?style=for-the-badge&logo=react&logoColor=black"/>
+  <img src="https://img.shields.io/badge/docker-ready-2496ED?style=for-the-badge&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/n8n-AI_Agent-EA4B71?style=for-the-badge&logo=n8n&logoColor=white"/>
+  <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white"/>
 </p>
 
-<p align="center"><b>Automated recon & vulnerability scanning from a real-time web dashboard.</b></p>
+<p align="center">
+  <b>🛡️ Automated Reconnaissance & Vulnerability Scanning with AI-Powered Analysis</b>
+</p>
+
+<p align="center">
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-architecture">Architecture</a> •
+  <a href="#-ai-idor-agent">AI Agent</a> •
+  <a href="#-screenshots">Screenshots</a> •
+  <a href="Documents/N8N_SETUP_GUIDE.md">n8n Setup Guide</a>
+</p>
 
 ---
 
-## What is NileDefender?
+## 📖 About
 
-NileDefender is a web-based security tool that automates the full penetration testing pipeline:
+**NileDefender** is an advanced AI-powered web application penetration testing framework designed to automate the entire penetration testing pipeline — from reconnaissance to exploitation to reporting. It combines **traditional scanning techniques** with an **AI-powered IDOR agent** that autonomously discovers access control vulnerabilities.
 
-**Subdomain discovery → Endpoint crawling → Vulnerability scanning → AI Report Generation**
+```
+🔍 Subdomain Discovery → 🕷️ Endpoint Crawling → 💉 Vulnerability Scanning → 🤖 AI IDOR Analysis → 📄 PDF Report
+```
 
-It works on both **remote domains** (`example.com`) and **local targets** (`http://localhost/bWAPP/`), with a modern dark-themed dashboard that shows results in real-time via WebSocket.
+Built for security researchers and penetration testers, NileDefender works on both **remote domains** (`example.com`) and **local targets** (`http://localhost/bWAPP/`), with a modern React dashboard that shows every result in real-time via WebSocket.
 
 ---
 
-## Features
+## ✨ Features
 
+### 🔍 Reconnaissance
+| Module | Description |
+|--------|-------------|
+| **Subdomain Enumeration** | Passive (CT logs, SecurityTrails, crt.sh, VirusTotal) + Active (DNS brute-force) |
+| **URL Crawling** | Multi-threaded endpoint discovery with GET/POST parameter extraction |
+| **Local App Crawling** | Selenium + Firefox headless crawler with auto-login for localhost apps |
+
+### 💉 Vulnerability Scanners
+| Scanner | Engine | Detection Method |
+|---------|--------|-----------------|
+| **SQL Injection** | sqlmap | Automated SQLi analysis (blind, error-based, union) |
+| **Cross-Site Scripting (XSS)** | dalfox | Reflected & stored XSS via Go-based scanner |
+| **Path Traversal / LFI** | Custom | Payload wordlist + response fingerprinting |
+| **HTML Injection** | Custom | Payload reflection analysis in response body |
+| **Command Injection** | Custom | Verbose output, time-based blind, and OOB detection |
+| **IDOR** | n8n + GPT-4o-mini | AI agent compares baseline vs modified requests |
+
+### 🧠 AI-Powered Features
 | Feature | Description |
-|---|---|
-| 🔍 **Subdomain Enumeration** | Passive (CT logs, APIs) + Active (DNS brute-force) |
-| 🕷️ **URL Crawling** | Discover endpoints and extract GET/POST parameters |
-| 🖥️ **Local App Crawling** | Selenium-based crawler for localhost apps with auto-login |
-| 💉 **SQL Injection Scanner** | Powered by sqlmap |
-| 📂 **Path Traversal Scanner** | Custom payload-based LFI/directory traversal detection |
-| 📝 **HTML Injection Scanner** | Payload reflection analysis |
-| ⚡ **Real-time Updates** | WebSocket (Socket.IO) for live scan progress |
-| 🤖 **AI Report Generation** | Groq LLM generates professional PDF security reports |
-| 🧠 **AI IDOR Agent** | n8n + GPT-4o-mini agent that actively tests endpoints for IDOR |
-| 📊 **Data Export** | JSON/CSV export of all scan data |
-| 🎨 **React Dashboard** | Modern dark navy + teal themed SPA |
+|---------|-------------|
+| **AI IDOR Agent** | Autonomous n8n workflow using GPT-4o-mini to test endpoints for Insecure Direct Object References |
+| **AI Report Generator** | GPT-4o-mini generates professional PDF security assessment reports with executive summary, CVSS scores, and remediation strategies |
+
+### 🖥️ Dashboard & UX
+| Feature | Description |
+|---------|-------------|
+| **Real-time Updates** | WebSocket (Socket.IO) pushes live scan progress to the browser |
+| **Multi-Theme Support** | Switch between multiple color themes with live preview |
+| **Data Export** | Export scan results as JSON or CSV |
+| **Scan Reuse** | Reuse previously crawled endpoints for faster vulnerability scans |
+| **Bulk Operations** | Delete individual scans or clear all data at once |
 
 ---
 
-## Tested On
-
-NileDefender has been tested against the following vulnerable web applications:
-
-| Target | Type | Description |
-|---|---|---|
-| **[bWAPP](http://www.yoursite.com/bWAPP/)** | Local (Docker/VM) | Buggy Web Application — 100+ vulnerabilities |
-| **[DVWA](https://github.com/digininja/DVWA)** | Local (Docker/VM) | Damn Vulnerable Web Application — multiple security levels |
-| **Remote Domains** | Remote | Any public domain for subdomain enumeration & scanning |
-
----
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Option 1: Docker (Recommended)
 
 ```bash
 git clone https://github.com/AbdelhamedRagheb/NileDefender.git
 cd NileDefender
-sudo docker compose up -d --build
 ```
 
-Open → http://localhost:5000
+Add your OpenAI API key to `config.ini`:
+```ini
+[API_KEYS]
+openai = sk-your-api-key-here
+```
 
-### Option 2: Virtual Environment
+Start the application:
+```bash
+docker compose up -d --build
+```
+
+| Service | URL |
+|---------|-----|
+| **Dashboard** | http://localhost:5000 |
+| **n8n** | http://localhost:5677 |
+
+> 📖 **First-time n8n setup required** — see [N8N_SETUP_GUIDE.md](Documents/N8N_SETUP_GUIDE.md) to import the IDOR workflow and add your OpenAI credential.
+
+### Option 2: Manual Installation
 
 ```bash
 git clone https://github.com/AbdelhamedRagheb/NileDefender.git
@@ -78,65 +113,200 @@ source my-env/bin/activate
 pip install -r requirements.txt
 
 # Frontend
-cd frontend
-npm install
-npm run build
-cd ..
+cd frontend && npm install && npm run build && cd ..
 
 # Run
 python server.py
 ```
 
-Open → http://localhost:5000
-
-> 📖 See [install.txt](install.txt) for full installation details.
+> ⚠️ Manual setup requires **sqlmap**, **dalfox**, **Firefox ESR**, and **geckodriver** installed on your system. Docker handles all of this automatically.
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
-React SPA (Vite) → Flask REST API + Socket.IO → Scanner Modules → SQLite DB
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        NileDefender Architecture                        │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   React 19 + Vite 8                    Flask + Socket.IO                │
+│  ┌─────────────────┐                 ┌─────────────────────┐            │
+│  │   Dashboard UI   │ ──── REST ────▶│   server.py          │            │
+│  │   (port 5173)    │◀── WebSocket ──│   (port 5000)        │            │
+│  └─────────────────┘                 └──────┬──────────────┘            │
+│                                              │                           │
+│                              ┌───────────────┼───────────────┐          │
+│                              ▼               ▼               ▼          │
+│                     ┌──────────────┐ ┌─────────────┐ ┌──────────────┐   │
+│                     │ Recon Modules│ │  Scanner     │ │  AI Report   │   │
+│                     │              │ │  Modules     │ │  Generator   │   │
+│                     │ • Subdomains │ │ • SQLi       │ │ • GPT-4o-mini│   │
+│                     │ • URL Crawl  │ │ • XSS        │ │ • WeasyPrint │   │
+│                     │ • Selenium   │ │ • LFI        │ │ • PDF Output │   │
+│                     └──────────────┘ │ • HTMLi      │ └──────────────┘   │
+│                                      │ • CMDi       │                    │
+│                                      └──────┬──────┘                    │
+│                                             │ webhook                    │
+│                                             ▼                            │
+│                                    ┌─────────────────┐                  │
+│                                    │   n8n AI Agent   │                  │
+│                                    │   (port 5677)    │                  │
+│                                    │                  │                  │
+│                                    │  GPT-4o-mini     │                  │
+│                                    │  IDOR Detection  │                  │
+│                                    └─────────────────┘                  │
+│                                                                          │
+│                          ┌──────────────┐                               │
+│                          │   SQLite DB   │                               │
+│                          │niledefender.db│                               │
+│                          └──────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-| Layer | Tech |
-|---|---|
-| **Frontend** | React 19, Vite 8, Socket.IO Client |
-| **Backend** | Flask, Flask-SocketIO, SQLAlchemy |
-| **Scanners** | sqlmap, custom Path Traversal & HTMLi modules |
-| **Recon** | Subdomain enum, URL crawler, Selenium local crawler |
-| **AI Reports** | Groq LLM (llama-3.3-70b) → WeasyPrint PDF |
-| **Database** | SQLite |
+### Tech Stack
 
-
----
-
-## 🧠 AI IDOR Agent Setup (n8n)
-
-The IDOR Agent uses **n8n** (included in Docker Compose) + **OpenAI GPT-4o-mini** to actively test endpoints for IDOR vulnerabilities after each Full Scan.
-
-### Setup Steps:
-
-**1. Open n8n:** http://localhost:5677
-
-**2. Create a local account** (first time only — any email/password works)
-
-**3. Import the workflow:**
-- Workflows → Import from file → select `agent_idor.json`
-
-**4. Add OpenAI credential:**
-- Credentials → Add Credential → OpenAI → paste your API Key → Save
-
-**5. Connect credential to AI Agent node:**
-- Open the workflow → click the AI Agent node → select your OpenAI credential
-
-**6. Activate the workflow** (toggle top-right from Inactive → Active)
-
-> 📖 Full details: [N8N_SETUP_GUIDE.md](N8N_SETUP_GUIDE.md)
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19, Vite 8, Socket.IO Client, React Router 7 |
+| **Backend** | Flask, Flask-SocketIO, Flask-CORS, gevent |
+| **Database** | SQLAlchemy + SQLite |
+| **Scanners** | sqlmap, dalfox, custom Python modules |
+| **Browser Automation** | Selenium + Firefox ESR + geckodriver |
+| **AI** | OpenAI GPT-4o-mini (reports + IDOR agent) |
+| **Workflow Engine** | n8n (Dockerized, AI agent orchestration) |
+| **PDF Generation** | WeasyPrint (HTML → PDF) |
+| **Containerization** | Docker multi-stage build + Docker Compose |
 
 ---
 
-## License
+## 🤖 AI IDOR Agent
 
-This project is for educational and authorized security testing purposes only.
+The IDOR Agent is an autonomous AI workflow powered by **n8n + GPT-4o-mini** that actively tests endpoints for **Insecure Direct Object Reference** vulnerabilities after each Full Scan.
 
+### How It Works
+
+```
+1. Full Scan completes static scanners (SQLi, XSS, LFI, HTMLi, CMDi)
+2. NileDefender triggers n8n webhook with scan_id + session cookie
+3. n8n fetches endpoints and filters for IDOR-relevant targets
+4. AI Agent analyzes each endpoint:
+   a. Makes a baseline request with original parameters
+   b. Modifies user/entity references (id, email, account, etc.)
+   c. Compares responses to detect unauthorized data access
+5. Confirmed IDOR findings are saved back to NileDefender
+6. Scan status updates to "Completed" automatically
+```
+
+### Setup
+
+1. Open **n8n** at http://localhost:5677
+2. Create an account (first time only)
+3. Import `agent_idor.json` workflow
+4. Add your **OpenAI API credential**
+5. **Activate** the workflow
+
+> 📖 Full step-by-step instructions: [N8N_SETUP_GUIDE.md](Documents/N8N_SETUP_GUIDE.md)
+
+---
+
+## 🔧 Usage
+
+### From the Dashboard
+
+1. Open http://localhost:5000
+2. Click **New Scan**
+3. Choose **Recon Scan** (discover assets) or **Vulnerability Scan** (find vulns)
+4. Enter your target and configure options
+5. Watch results appear in real-time
+
+### From the CLI
+
+```bash
+# Reconnaissance
+python recon_workflow.py -d example.com
+
+# Vulnerability scan (all modules)
+python vuln_workflow.py --target http://localhost/bWAPP/
+
+# Vulnerability scan (specific modules)
+python vuln_workflow.py --target http://localhost/bWAPP/ --modules sqli xss pt
+
+# List available scanner modules
+python vuln_workflow.py --list-modules
+
+# Generate AI PDF report
+python ai_report.py --db output/niledefender.db --pdf report.pdf
+```
+
+---
+
+## 🧪 Tested On
+
+NileDefender has been tested against the following intentionally vulnerable applications:
+
+| Target | Type | Description |
+|--------|------|-------------|
+| [**bWAPP**](http://www.yoursite.com/bWAPP/) | Local (Docker/VM) | Buggy Web Application — 100+ vulnerability scenarios |
+| [**DVWA**](https://github.com/digininja/DVWA) | Local (Docker/VM) | Damn Vulnerable Web Application — multiple security levels |
+| **Remote Domains** | Remote | Any public domain for subdomain enumeration & endpoint discovery |
+
+> ⚠️ **Important Note for Local Targets:** If you are running NileDefender via Docker and want to scan a local application on your machine (like DVWA), **your target application must be bound to `0.0.0.0`** (all interfaces) rather than `127.0.0.1`. Docker's network isolation specifically prevents containers from reaching your host's strict loopback address. For example, use `-p 4280:80` instead of `-p 127.0.0.1:4280:80` in your target's Docker Compose file.
+
+---
+
+## 📁 Project Structure
+
+```
+NileDefender/
+├── server.py                  # Flask API + WebSocket + serves React
+├── vuln_workflow.py           # Vulnerability scanning workflow (CLI + API)
+├── recon_workflow.py          # Reconnaissance workflow (CLI)
+├── ai_report.py               # AI report generator (GPT-4o-mini → PDF)
+├── agent_idor.json            # n8n IDOR workflow (import into n8n)
+├── config.ini                 # API keys (OpenAI, etc.)
+├── Dockerfile                 # Multi-stage Docker build
+├── docker-compose.yml         # Docker Compose (app + n8n)
+│
+├── core/                      # Database ORM models + CRUD
+├── recon/                     # Recon modules (subdomains, crawlers)
+├── scanners/                  # Vulnerability scanner modules
+│   ├── sqli.py                #   SQL Injection (sqlmap)
+│   ├── xss.py                 #   XSS (dalfox)
+│   ├── PTVuln.py              #   Path Traversal
+│   ├── htmli.py               #   HTML Injection
+│   └── Command_Injection.py   #   Command Injection
+│
+└── frontend/                  # React + Vite SPA
+    └── src/
+        ├── components/        #   UI components (Sidebar, Modals, Theme, etc.)
+        ├── pages/             #   Dashboard, Scans, ScanDetails, etc.
+        ├── hooks/             #   useSocket, useTheme
+        └── services/          #   API service layer
+```
+
+---
+
+
+
+## 📄 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [**N8N_SETUP_GUIDE.md**](Documents/N8N_SETUP_GUIDE.md) | Step-by-step n8n setup, workflow import, and troubleshooting |
+| [**PROJECT_KNOWLEDGE.md**](Documents/PROJECT_KNOWLEDGE.md) | Complete technical reference — architecture, API, database schema, data flows |
+| [**install.txt**](install.txt) | Manual installation dependencies and system requirements |
+
+---
+
+## ⚠️ Disclaimer
+
+This tool is intended for **educational purposes** and **authorized security testing only**. Always obtain proper authorization before scanning any target. The developers are not responsible for any misuse or damage caused by this tool.
+
+---
+
+<p align="center">
+  <img src="Documents/Icon.png" alt="NileDefender Icon" width="60"/>
+  <br/>
+  <b>NileDefender</b> — Built for defenders, by defenders.
+</p>
