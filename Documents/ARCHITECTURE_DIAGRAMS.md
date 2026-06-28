@@ -130,22 +130,16 @@ graph TB
 ## 2. Database ER Diagram
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#3498db', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2980b9', 'lineColor': '#e67e22', 'secondaryColor': '#1abc9c', 'tertiaryColor': '#9b59b6', 'background': '#1a1a2e'}}}%%
 erDiagram
-    ScanHistory ||--o{ Subdomain : has
-    ScanHistory ||--o{ Endpoint : has
-    ScanHistory ||--o{ Vulnerability : has
-
-    ScanHistory {
+    scan_history {
         int id PK
         string domain
+        datetime scan_date
         string scan_type
         string status
-        datetime created_at
-        datetime updated_at
     }
 
-    Subdomain {
+    subdomains {
         int id PK
         int scan_id FK
         string subdomain
@@ -154,7 +148,7 @@ erDiagram
         string title
     }
 
-    Endpoint {
+    endpoints {
         int id PK
         int scan_id FK
         text url
@@ -168,7 +162,7 @@ erDiagram
         json param_types
     }
 
-    Vulnerability {
+    vulnerabilities {
         int id PK
         int scan_id FK
         string vulnerability_type
@@ -181,6 +175,10 @@ erDiagram
         text vulnerability_data
         datetime discovered_at
     }
+
+    scan_history ||--o{ subdomains : has
+    scan_history ||--o{ endpoints : has
+    scan_history ||--o{ vulnerabilities : has
 ```
 
 ---
