@@ -295,6 +295,7 @@ NileDefender/
 |----------|-------------|
 | [**N8N_SETUP_GUIDE.md**](Documents/N8N_SETUP_GUIDE.md) | Step-by-step n8n setup, workflow import, and troubleshooting |
 | [**PROJECT_KNOWLEDGE.md**](Documents/PROJECT_KNOWLEDGE.md) | Complete technical reference — architecture, API, database schema, data flows |
+| [**ARCHITECTURE_DIAGRAMS.md**](Documents/ARCHITECTURE_DIAGRAMS.md) | Full architectural, flowchart, and sequence diagrams of the project |
 | [**install.txt**](install.txt) | Manual installation dependencies and system requirements |
 
 ---
