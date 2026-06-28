@@ -20,7 +20,7 @@
   <a href="#-features">Features</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="#-ai-idor-agent">AI Agent</a> •
-  <a href="#-screenshots">Screenshots</a> •
+  <a href="Screenshots/">Screenshots</a> •
   <a href="Documents/N8N_SETUP_GUIDE.md">n8n Setup Guide</a>
 </p>
 
