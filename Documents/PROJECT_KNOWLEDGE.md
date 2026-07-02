@@ -30,7 +30,7 @@ The project also integrates **n8n** as an AI workflow engine to autonomously tes
 | **Command Injection Scanner** | Verbose, time-based, and OOB (Out-of-Band) injection detection |
 | **IDOR Scanner (AI Agent)** | n8n + GPT-4o-mini AI Agent for automated IDOR testing |
 | **Real-time Updates** | WebSocket (Socket.IO) for live scan progress |
-| **AI Report Generation** | Groq LLM generates professional PDF security assessment |
+| **AI Report Generation** | GPT-4o-mini LLM generates professional PDF security assessment |
 | **Data Export** | JSON/CSV export of all scan data |
 | **React Dashboard** | Modern React + Vite SPA with multi-theme support |
 | **Docker Deployment** | Multi-stage Docker build + Docker Compose orchestration |
